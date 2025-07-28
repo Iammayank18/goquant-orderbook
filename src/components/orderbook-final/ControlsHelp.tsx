@@ -128,6 +128,16 @@ const ControlsHelp: React.FC<ControlsHelpProps> = ({ theme, onClose }) => {
                 <span className="font-mono font-medium">T</span>
                 <span className="text-gray-500">Toggle Theme</span>
               </div>
+              <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-opacity-50"
+                style={{ backgroundColor: theme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.05)' }}>
+                <span className="font-mono font-medium">+/-</span>
+                <span className="text-gray-500">Zoom In/Out</span>
+              </div>
+              <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-opacity-50"
+                style={{ backgroundColor: theme === 'dark' ? 'rgba(251, 146, 60, 0.1)' : 'rgba(251, 146, 60, 0.05)' }}>
+                <span className="font-mono font-medium">→↑←↓</span>
+                <span className="text-gray-500">Pan Camera</span>
+              </div>
               <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-opacity-50 col-span-2"
                 style={{ backgroundColor: theme === 'dark' ? 'rgba(107, 114, 128, 0.1)' : 'rgba(107, 114, 128, 0.05)' }}>
                 <span className="font-mono font-medium">ESC</span>
@@ -144,7 +154,9 @@ const ControlsHelp: React.FC<ControlsHelpProps> = ({ theme, onClose }) => {
             <p className="font-medium mb-1">💡 Tips:</p>
             <ul className="space-y-1 text-gray-500">
               <li>• Double-click to reset camera position</li>
-              <li>• Use smooth scroll for precise zoom control</li>
+              <li>• Scroll wheel to zoom in/out</li>
+              <li>• Arrow keys to pan the camera</li>
+              <li>• + / - keys for zoom control</li>
               <li>• Hold Shift while scrolling for slower zoom</li>
               <li>• The visualization auto-adapts to your screen size</li>
             </ul>

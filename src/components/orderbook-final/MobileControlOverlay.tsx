@@ -26,6 +26,7 @@ interface ViewSettings {
   cameraDistance: number;
   showOrderFlow: boolean;
   showImbalance: boolean;
+  showSpread: boolean;
 }
 
 interface MobileControlOverlayProps {

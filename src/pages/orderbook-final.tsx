@@ -43,6 +43,10 @@ const ControlsHelp = dynamic(
   }
 );
 
+const Legend = dynamic(() => import("@/components/orderbook-final/Legend"), {
+  ssr: false,
+});
+
 export default function OrderbookFinalPage() {
   const [mounted, setMounted] = useState(false);
   const [symbol] = useState("BTCUSDT");
@@ -52,16 +56,34 @@ export default function OrderbookFinalPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
+
+  // Apply dark class to html element
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
 
   // View settings
   const [viewSettings, setViewSettings] = useState({
     autoRotate: true,
     showGrid: true,
     showAxes: true,
-    cameraDistance: 50,
+    cameraDistance: 80,
     showOrderFlow: false,
     showImbalance: false,
+    showSpread: true,
   });
+
+  // Disable auto-rotation when interacting
+  useEffect(() => {
+    if (isInteracting && viewSettings.autoRotate) {
+      setViewSettings((prev) => ({ ...prev, autoRotate: false }));
+    }
+  }, [isInteracting]);
 
   // Filter settings
   const [filterSettings, setFilterSettings] = useState<FilterSettings>({
@@ -127,6 +149,11 @@ export default function OrderbookFinalPage() {
         case "escape":
           setShowHelp(false);
           setShowControls(false);
+          break;
+        case "l":
+          if (!e.ctrlKey && !e.metaKey) {
+            setShowLegend((prev) => !prev);
+          }
           break;
       }
     };
@@ -225,6 +252,9 @@ export default function OrderbookFinalPage() {
 
         {/* 3D Visualization */}
         <div className="flex-1 relative group">
+          {/* Legend */}
+          {showLegend && <Legend theme={theme} metrics={metrics} />}
+
           {/* Interactive Hint */}
           <div
             className={cn(
@@ -254,9 +284,7 @@ export default function OrderbookFinalPage() {
                     d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
                   />
                 </svg>
-                <span>
-                  Click and drag to rotate • Scroll to zoom • Right-click to pan
-                </span>
+                <span>Click and drag to rotate</span>
               </div>
             </div>
           </div>
@@ -275,8 +303,8 @@ export default function OrderbookFinalPage() {
           >
             <PerspectiveCamera
               makeDefault
-              position={[0, isMobile ? 20 : 30, viewSettings.cameraDistance]}
-              fov={isMobile ? 70 : 60}
+              position={[0, isMobile ? 15 : 25, viewSettings.cameraDistance]}
+              fov={isMobile ? 65 : 55}
             />
 
             <Orderbook3DScene
@@ -292,22 +320,11 @@ export default function OrderbookFinalPage() {
               enablePan={true}
               enableZoom={true}
               enableRotate={true}
-              zoomSpeed={isMobile ? 0.8 : 0.5}
-              panSpeed={0.5}
               rotateSpeed={isMobile ? 0.8 : 0.5}
-              minDistance={isMobile ? 15 : 20}
-              maxDistance={isMobile ? 80 : 100}
-              mouseButtons={{
-                LEFT: THREE.MOUSE.ROTATE,
-                MIDDLE: THREE.MOUSE.DOLLY,
-                RIGHT: THREE.MOUSE.PAN,
-              }}
-              touches={{
-                ONE: THREE.TOUCH.ROTATE,
-                TWO: THREE.TOUCH.DOLLY_PAN,
-              }}
+              maxPolarAngle={Math.PI * 0.85}
               enableDamping={true}
-              dampingFactor={0.05}
+              dampingFactor={0.1}
+              target={[0, 5, 25]}
             />
 
             {showStats && <Stats />}

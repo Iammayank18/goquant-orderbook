@@ -1,15 +1,68 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
+import { OrderbookSnapshot } from '@/types/orderbook';
 
 interface AxesHelperProps {
   bounds: { x: number; y: number; z: number };
   theme: 'dark' | 'light';
+  snapshots?: OrderbookSnapshot[];
 }
 
-const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, theme }) => {
+const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, theme, snapshots }) => {
   const axisColor = theme === 'dark' ? '#666666' : '#999999';
   const textColor = theme === 'dark' ? '#ffffff' : '#000000';
+  const labelColor = theme === 'dark' ? '#cccccc' : '#333333';
+  
+  // Calculate price labels based on actual data
+  const priceLabels = useMemo(() => {
+    if (!snapshots || snapshots.length === 0) return [];
+    
+    const latest = snapshots[snapshots.length - 1];
+    if (!latest.bids?.length || !latest.asks?.length) return [];
+    
+    const midPrice = (latest.bids[0].price + latest.asks[0].price) / 2;
+    const priceRange = latest.asks[0].price - latest.bids[0].price;
+    
+    // Create 5 price labels
+    const labels = [];
+    for (let i = -2; i <= 2; i++) {
+      const price = midPrice + (i * priceRange * 0.5);
+      const x = i * bounds.x * 0.4;
+      labels.push({ x, price });
+    }
+    return labels;
+  }, [snapshots, bounds.x]);
+  
+  // Calculate quantity labels
+  const quantityLabels = useMemo(() => {
+    const labels = [];
+    const maxY = bounds.y;
+    
+    // Create logarithmic quantity labels
+    for (let i = 0; i <= 4; i++) {
+      const y = (i / 4) * maxY;
+      const quantity = Math.pow(10, (y / 10)); // Reverse log scale
+      labels.push({ y, quantity });
+    }
+    return labels;
+  }, [bounds.y]);
+  
+  // Calculate time labels
+  const timeLabels = useMemo(() => {
+    if (!snapshots || snapshots.length === 0) return [];
+    
+    const labels = [];
+    const totalSnapshots = Math.min(snapshots.length, 50);
+    const interval = Math.max(1, Math.floor(totalSnapshots / 5));
+    
+    for (let i = 0; i < totalSnapshots; i += interval) {
+      const z = i * 3; // Match the spacing in OrderbookBars
+      const time = new Date(snapshots[snapshots.length - totalSnapshots + i].timestamp);
+      labels.push({ z, time });
+    }
+    return labels;
+  }, [snapshots]);
   
   return (
     <group>
@@ -32,6 +85,48 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, theme }) => {
         >
           Price →
         </Text>
+        
+        {/* Price labels */}
+        {priceLabels.map((label, i) => (
+          <group key={i}>
+            <mesh position={[label.x, -0.5, 0]}>
+              <boxGeometry args={[0.05, 0.3, 0.05]} />
+              <meshBasicMaterial color={labelColor} />
+            </mesh>
+            <Text
+              position={[label.x, -1.5, 0]}
+              fontSize={0.8}
+              color={labelColor}
+              anchorX="center"
+              anchorY="top"
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              ${label.price.toFixed(2)}
+            </Text>
+          </group>
+        ))}
+        
+        {/* Bid/Ask side indicators */}
+        <Text
+          position={[-bounds.x * 0.7, -2.5, 0]}
+          fontSize={1}
+          color="#00ff88"
+          anchorX="center"
+          anchorY="top"
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          ← BIDS
+        </Text>
+        <Text
+          position={[bounds.x * 0.7, -2.5, 0]}
+          fontSize={1}
+          color="#ff4444"
+          anchorX="center"
+          anchorY="top"
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          ASKS →
+        </Text>
       </group>
       
       {/* Y-axis (Quantity) */}
@@ -51,8 +146,27 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, theme }) => {
           anchorX="center"
           anchorY="middle"
         >
-          Quantity ↑
+          Quantity (Log Scale) ↑
         </Text>
+        
+        {/* Quantity labels */}
+        {quantityLabels.map((label, i) => (
+          <group key={i}>
+            <mesh position={[-0.5, label.y, 0]}>
+              <boxGeometry args={[0.3, 0.05, 0.05]} />
+              <meshBasicMaterial color={labelColor} />
+            </mesh>
+            <Text
+              position={[-1.5, label.y, 0]}
+              fontSize={0.8}
+              color={labelColor}
+              anchorX="right"
+              anchorY="middle"
+            >
+              {label.quantity.toFixed(0)}
+            </Text>
+          </group>
+        ))}
       </group>
       
       {/* Z-axis (Time) */}
@@ -73,6 +187,52 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, theme }) => {
           anchorY="middle"
         >
           Time →
+        </Text>
+        
+        {/* Time labels */}
+        {timeLabels.map((label, i) => (
+          <group key={i}>
+            <mesh position={[0, -0.5, label.z]}>
+              <boxGeometry args={[0.05, 0.3, 0.05]} />
+              <meshBasicMaterial color={labelColor} />
+            </mesh>
+            <Text
+              position={[0, -1.5, label.z]}
+              fontSize={0.7}
+              color={labelColor}
+              anchorX="center"
+              anchorY="top"
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              {label.time.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+              })}
+            </Text>
+          </group>
+        ))}
+        
+        {/* Now/Past indicators */}
+        <Text
+          position={[0, -2.5, 0]}
+          fontSize={0.8}
+          color={labelColor}
+          anchorX="center"
+          anchorY="top"
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          ← Past
+        </Text>
+        <Text
+          position={[0, -2.5, bounds.z]}
+          fontSize={0.8}
+          color={labelColor}
+          anchorX="center"
+          anchorY="top"
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          Now →
         </Text>
       </group>
       
