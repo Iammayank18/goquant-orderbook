@@ -112,15 +112,15 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
       {/* Grid with better styling */}
       {viewSettings.showGrid && (
         <Grid
-          args={[200, 200]}
-          position={[0, -0.1, 0]}
-          cellSize={10}
+          args={[80, 100]}
+          position={[0, -0.1, 50]}
+          cellSize={5}
           cellThickness={0.6}
           cellColor="#1a1a2e"
-          sectionSize={50}
+          sectionSize={20}
           sectionThickness={1.5}
           sectionColor="#16213e"
-          fadeDistance={150}
+          fadeDistance={100}
           fadeStrength={1}
         />
       )}
@@ -137,6 +137,7 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
           snapshots={snapshots}
           maxLevels={isMobile ? 8 : 15}
           maxSnapshots={isMobile ? 15 : 25}
+          bounds={sceneBounds}
         />
 
         {/* Pressure zones */}

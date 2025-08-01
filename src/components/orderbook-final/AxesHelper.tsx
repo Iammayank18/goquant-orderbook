@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
-import { Text } from '@react-three/drei';
-import * as THREE from 'three';
-import { OrderbookSnapshot } from '@/types/orderbook';
+import React, { useMemo } from "react";
+import { Text } from "@react-three/drei";
+import * as THREE from "three";
+import { OrderbookSnapshot } from "@/types/orderbook";
 
 interface AxesHelperProps {
   bounds: { x: number; y: number; z: number };
@@ -9,60 +9,68 @@ interface AxesHelperProps {
 }
 
 const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, snapshots }) => {
-  const axisColor = '#666666'; // Will be styled via CSS for light mode
-  const textColor = '#ffffff'; // Will be styled via CSS for light mode
-  const labelColor = '#cccccc'; // Will be styled via CSS for light mode
-  
+  const axisColor = "#444444"; // Professional dark gray
+  const textColor = "#e0e0e0"; // Professional light gray for text
+  const labelColor = "#999999"; // Professional medium gray for labels
+  const gridColor = "#333333"; // Professional grid lines
+
   // Calculate price labels based on actual data
   const priceLabels = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return [];
-    
+
     const latest = snapshots[snapshots.length - 1];
     if (!latest.bids?.length || !latest.asks?.length) return [];
-    
+
     const midPrice = (latest.bids[0].price + latest.asks[0].price) / 2;
     const priceRange = latest.asks[0].price - latest.bids[0].price;
-    
-    // Create 5 price labels
+
+    // Create professional price labels with proper increments
     const labels = [];
-    for (let i = -2; i <= 2; i++) {
-      const price = midPrice + (i * priceRange * 0.5);
-      const x = i * bounds.x * 0.4;
+    const increment = priceRange > 100 ? 50 : priceRange > 10 ? 5 : 1;
+    const roundedMid = Math.round(midPrice / increment) * increment;
+
+    for (let i = -3; i <= 3; i++) {
+      const price = roundedMid + i * increment;
+      const x = ((price - midPrice) / priceRange) * bounds.x * 0.8;
       labels.push({ x, price });
     }
     return labels;
   }, [snapshots, bounds.x]);
-  
+
   // Calculate quantity labels
   const quantityLabels = useMemo(() => {
     const labels = [];
     const maxY = bounds.y;
-    
-    // Create logarithmic quantity labels
-    for (let i = 0; i <= 4; i++) {
-      const y = (i / 4) * maxY;
-      const quantity = Math.pow(10, (y / 10)); // Reverse log scale
-      labels.push({ y, quantity });
+
+    // Market standard volume labels in BTC
+    const volumeLevels = [0, 0.1, 0.5, 1, 5, 10, 50];
+    for (let i = 0; i < volumeLevels.length; i++) {
+      const y = Math.log10(volumeLevels[i] + 1) * 5; // Match the log scale in OrderbookBars
+      if (y <= maxY) {
+        labels.push({ y, quantity: volumeLevels[i] });
+      }
     }
     return labels;
   }, [bounds.y]);
-  
+
   // Calculate time labels
   const timeLabels = useMemo(() => {
     if (!snapshots || snapshots.length === 0) return [];
-    
+
     const labels = [];
     const totalSnapshots = Math.min(snapshots.length, 50);
     const interval = Math.max(1, Math.floor(totalSnapshots / 5));
-    
+
     for (let i = 0; i < totalSnapshots; i += interval) {
-      const z = i * 3; // Match the spacing in OrderbookBars
-      const time = new Date(snapshots[snapshots.length - totalSnapshots + i].timestamp);
+      const z = i * 2; // Match the updated spacing in OrderbookBars
+      const time = new Date(
+        snapshots[snapshots.length - totalSnapshots + i].timestamp
+      );
       labels.push({ z, time });
     }
     return labels;
   }, [snapshots]);
-  
+
   return (
     <group>
       {/* X-axis (Price) */}
@@ -82,9 +90,9 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, snapshots }) => {
           anchorX="center"
           anchorY="middle"
         >
-          Price →
+          Price (USDT)
         </Text>
-        
+
         {/* Price labels */}
         {priceLabels.map((label, i) => (
           <group key={i}>
@@ -100,34 +108,38 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, snapshots }) => {
               anchorY="top"
               rotation={[-Math.PI / 2, 0, 0]}
             >
-              ${label.price.toFixed(2)}
+              $
+              {label.price.toLocaleString("en-US", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
             </Text>
           </group>
         ))}
-        
-        {/* Bid/Ask side indicators */}
+
+        {/* Professional Bid/Ask side indicators */}
         <Text
           position={[-bounds.x * 0.7, -2.5, 0]}
-          fontSize={1}
-          color="#00ff88"
+          fontSize={1.2}
+          color="#00d68f"
           anchorX="center"
           anchorY="top"
           rotation={[-Math.PI / 2, 0, 0]}
         >
-          ← BIDS
+          ← BUY SIDE
         </Text>
         <Text
           position={[bounds.x * 0.7, -2.5, 0]}
-          fontSize={1}
-          color="#ff4444"
+          fontSize={1.2}
+          color="#ff4757"
           anchorX="center"
           anchorY="top"
           rotation={[-Math.PI / 2, 0, 0]}
         >
-          ASKS →
+          SELL SIDE →
         </Text>
       </group>
-      
+
       {/* Y-axis (Quantity) */}
       <group>
         <mesh position={[0, bounds.y / 2, 0]}>
@@ -145,9 +157,9 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, snapshots }) => {
           anchorX="center"
           anchorY="middle"
         >
-          Quantity (Log Scale) ↑
+          Volume (BTC)
         </Text>
-        
+
         {/* Quantity labels */}
         {quantityLabels.map((label, i) => (
           <group key={i}>
@@ -162,12 +174,15 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, snapshots }) => {
               anchorX="right"
               anchorY="middle"
             >
-              {label.quantity.toFixed(0)}
+              {label.quantity < 1
+                ? label.quantity.toFixed(2)
+                : label.quantity.toFixed(1)}{" "}
+              BTC
             </Text>
           </group>
         ))}
       </group>
-      
+
       {/* Z-axis (Time) */}
       <group>
         <mesh position={[0, 0, bounds.z / 2]}>
@@ -185,9 +200,9 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, snapshots }) => {
           anchorX="center"
           anchorY="middle"
         >
-          Time →
+          Time (UTC)
         </Text>
-        
+
         {/* Time labels */}
         {timeLabels.map((label, i) => (
           <group key={i}>
@@ -203,15 +218,16 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, snapshots }) => {
               anchorY="top"
               rotation={[-Math.PI / 2, 0, 0]}
             >
-              {label.time.toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                second: '2-digit'
+              {label.time.toLocaleTimeString("en-US", {
+                hour12: false,
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
               })}
             </Text>
           </group>
         ))}
-        
+
         {/* Now/Past indicators */}
         <Text
           position={[0, -2.5, 0]}
@@ -234,11 +250,31 @@ const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, snapshots }) => {
           Now →
         </Text>
       </group>
-      
-      {/* Origin marker */}
+
+      {/* Professional grid planes */}
+      <group>
+        {/* XZ plane grid (price-time) */}
+        <gridHelper
+          args={[bounds.x * 2, 20, new THREE.Color(gridColor), new THREE.Color(gridColor)]}
+          rotation={[0, 0, 0]}
+          position={[0, 0, bounds.z / 2]}
+        />
+
+        {/* Current price line */}
+        <mesh position={[0, bounds.y / 2, bounds.z / 2]}>
+          <boxGeometry args={[0.1, bounds.y, bounds.z]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.1} />
+        </mesh>
+      </group>
+
+      {/* Spread indicator at origin */}
       <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[0.2, 16, 16]} />
-        <meshBasicMaterial color="#ffff00" />
+        <sphereGeometry args={[0.3, 16, 16]} />
+        <meshStandardMaterial
+          color="#ffffff"
+          emissive={new THREE.Color("#ffffff")}
+          emissiveIntensity={0.3}
+        />
       </mesh>
     </group>
   );

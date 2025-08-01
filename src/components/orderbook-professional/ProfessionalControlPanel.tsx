@@ -97,17 +97,17 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
 
   return (
     <Tabs defaultValue="view" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 mb-4">
+      <TabsList className="grid w-full grid-cols-3 mb-4 bg-muted/50">
         <TabsTrigger value="view">View</TabsTrigger>
         <TabsTrigger value="filter">Filter</TabsTrigger>
         <TabsTrigger value="performance">Performance</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="view" className="space-y-4 mt-0">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Display Options</CardTitle>
-            <CardDescription>
+      <TabsContent value="view" className="space-y-4 mt-4">
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-card-foreground">Display Options</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
               Control what elements are visible in the 3D view
             </CardDescription>
           </CardHeader>
@@ -222,18 +222,18 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
         </Card>
       </TabsContent>
 
-      <TabsContent value="filter" className="space-y-4 mt-0">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Data Sources</CardTitle>
-            <CardDescription>
+      <TabsContent value="filter" className="space-y-4 mt-4">
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-card-foreground">Data Sources</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
               Select which venues to display data from
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="mb-3 p-2 rounded-md bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm">
-              <p className="font-medium">Real-Time Data</p>
-              <p className="text-xs mt-1">
+            <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
+              <p className="font-medium text-blue-700 dark:text-blue-300 text-sm">Real-Time Data</p>
+              <p className="text-xs mt-1 text-blue-600 dark:text-blue-400">
                 Currently only Binance is supported for live orderbook data
               </p>
             </div>
@@ -267,10 +267,10 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Data Filters</CardTitle>
-            <CardDescription>Fine-tune what data is displayed</CardDescription>
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-card-foreground">Data Filters</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">Fine-tune what data is displayed</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Price Range */}
@@ -376,11 +376,11 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
         </Card>
       </TabsContent>
 
-      <TabsContent value="performance" className="space-y-4 mt-0">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Performance Metrics</CardTitle>
-            <CardDescription>Real-time performance statistics</CardDescription>
+      <TabsContent value="performance" className="space-y-4 mt-4">
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-card-foreground">Performance Metrics</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">Real-time performance statistics</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Data Processing */}
@@ -435,9 +435,9 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
         </Card>
 
         {/* Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Actions</CardTitle>
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-card-foreground">Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button

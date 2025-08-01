@@ -139,7 +139,7 @@ export default function OrderbookProfessionalPage() {
         const zones = pressureZoneDetector.detectPressureZones(snapshot);
         allZones.push(...zones);
       } catch (error) {
-        console.error("Error detecting pressure zones:", error);
+        // console.error("Error detecting pressure zones:", error);
       }
     });
 
@@ -514,18 +514,18 @@ export default function OrderbookProfessionalPage() {
             />
 
             <OrbitControls
-              enablePan={false}
+              enablePan={true}
               enableZoom={true}
               enableRotate={true}
               zoomSpeed={0.7}
               rotateSpeed={isMobile ? 0.8 : 0.5}
               minDistance={isMobile ? 30 : 40}
-              maxDistance={isMobile ? 120 : 250}
-              maxPolarAngle={Math.PI * 0.75}
+              maxDistance={isMobile ? 120 : 200}
+              maxPolarAngle={Math.PI * 0.85}
               minPolarAngle={Math.PI * 0.1}
               enableDamping={true}
               dampingFactor={0.05}
-              target={[0, 10, 30]}
+              target={[0, 7, 25]}
             />
 
             {showStats && !isMobile && (

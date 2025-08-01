@@ -1,6 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { OrderbookSnapshot, FilterSettings, VenueType } from '@/types/orderbook';
-import { BinanceWebSocketService } from '@/services/binanceWebSocket';
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  OrderbookSnapshot,
+  FilterSettings,
+  VenueType,
+} from "@/types/orderbook";
+import { BinanceWebSocketService } from "@/services/binanceWebSocket";
 
 interface OrderbookStats {
   totalSnapshots: number;
@@ -38,53 +42,56 @@ export function useOrderbookData(
   const messagesCount = useRef(0);
   const bytesCount = useRef(0);
 
-  // Handle new snapshot from WebSocket
-  const handleSnapshot = useCallback((snapshot: OrderbookSnapshot) => {
-    console.log('Received snapshot from Binance:', {
-      timestamp: new Date(snapshot.timestamp).toISOString(),
-      bidCount: snapshot.bids.length,
-      askCount: snapshot.asks.length,
-      topBid: snapshot.bids[0],
-      topAsk: snapshot.asks[0]
-    });
-    
-    // Update stats
-    messagesCount.current++;
-    bytesCount.current += JSON.stringify(snapshot).length;
+  // Handle new snapshot from WebSocket - Memoized to prevent recreating
+  const handleSnapshot = useCallback(
+    (snapshot: OrderbookSnapshot) => {
+      console.log("Received snapshot from Binance:", {
+        timestamp: new Date(snapshot.timestamp).toISOString(),
+        bidCount: snapshot.bids.length,
+        askCount: snapshot.asks.length,
+        topBid: snapshot.bids[0],
+        topAsk: snapshot.asks[0],
+      });
 
-    // Apply filters
-    let filteredSnapshot = { ...snapshot };
+      // Update stats
+      messagesCount.current++;
+      bytesCount.current += JSON.stringify(snapshot).length;
 
-    if (settings.priceRange[0] > 0 || settings.priceRange[1] < 100000) {
-      filteredSnapshot.bids = snapshot.bids.filter(
-        (bid) =>
-          bid.price >= settings.priceRange[0] &&
-          bid.price <= settings.priceRange[1]
-      );
-      filteredSnapshot.asks = snapshot.asks.filter(
-        (ask) =>
-          ask.price >= settings.priceRange[0] &&
-          ask.price <= settings.priceRange[1]
-      );
-    }
+      // Apply filters
+      let filteredSnapshot = { ...snapshot };
 
-    if (settings.quantityThreshold > 0) {
-      filteredSnapshot.bids = filteredSnapshot.bids.filter(
-        (bid) => bid.quantity >= settings.quantityThreshold
-      );
-      filteredSnapshot.asks = filteredSnapshot.asks.filter(
-        (ask) => ask.quantity >= settings.quantityThreshold
-      );
-    }
+      if (settings.priceRange[0] > 0 || settings.priceRange[1] < 100000) {
+        filteredSnapshot.bids = snapshot.bids.filter(
+          (bid) =>
+            bid.price >= settings.priceRange[0] &&
+            bid.price <= settings.priceRange[1]
+        );
+        filteredSnapshot.asks = snapshot.asks.filter(
+          (ask) =>
+            ask.price >= settings.priceRange[0] &&
+            ask.price <= settings.priceRange[1]
+        );
+      }
 
-    setSnapshots((prev) => {
-      const cutoffTime = Date.now() - settings.timeRange * 1000;
-      const filtered = [...prev, filteredSnapshot].filter(
-        (s) => s.timestamp > cutoffTime
-      );
-      return filtered.slice(-200); // Keep last 200 snapshots max
-    });
-  }, [settings]);
+      if (settings.quantityThreshold > 0) {
+        filteredSnapshot.bids = filteredSnapshot.bids.filter(
+          (bid) => bid.quantity >= settings.quantityThreshold
+        );
+        filteredSnapshot.asks = filteredSnapshot.asks.filter(
+          (ask) => ask.quantity >= settings.quantityThreshold
+        );
+      }
+
+      setSnapshots((prev) => {
+        const cutoffTime = Date.now() - settings.timeRange * 1000;
+        const filtered = [...prev, filteredSnapshot].filter(
+          (s) => s.timestamp > cutoffTime
+        );
+        return filtered.slice(-200); // Keep last 200 snapshots max
+      });
+    },
+    [settings.priceRange, settings.quantityThreshold, settings.timeRange]
+  );
 
   // Update stats periodically
   useEffect(() => {
@@ -94,7 +101,7 @@ export function useOrderbookData(
 
       if (timeDiff > 0) {
         const snapshotsPerSecond = messagesCount.current / timeDiff;
-        
+
         setStats({
           totalSnapshots: snapshots.length,
           snapshotsPerSecond: Math.round(snapshotsPerSecond),
@@ -110,7 +117,7 @@ export function useOrderbookData(
     };
 
     statsIntervalRef.current = setInterval(updateStats, 1000);
-    
+
     return () => {
       if (statsIntervalRef.current) {
         clearInterval(statsIntervalRef.current);
@@ -118,45 +125,55 @@ export function useOrderbookData(
     };
   }, [snapshots.length]);
 
-  // Connect to WebSocket
+  // Store previous venues to check if they actually changed
+  const prevVenuesRef = useRef<VenueType[]>([]);
+
+  // Connect to WebSocket with proper dependency management
   useEffect(() => {
-    console.log('useRealOrderbookData - venues changed:', settings.venues);
-    
+    // Check if venues actually changed
+    const venuesChanged =
+      JSON.stringify(prevVenuesRef.current) !== JSON.stringify(settings.venues);
+    if (!venuesChanged) return;
+
+    prevVenuesRef.current = settings.venues;
+
     // Disconnect existing connection first
     if (wsServiceRef.current) {
-      console.log('Disconnecting existing WebSocket connection');
       wsServiceRef.current.disconnect();
       wsServiceRef.current = null;
     }
-    
+
     // Clear snapshots when venues change
     setSnapshots([]);
-    
+
     // Only connect if Binance is in the selected venues
-    if (!settings.venues.includes('binance')) {
-      console.log('Binance not selected in venues, skipping connection');
+    if (!settings.venues.includes("binance")) {
       setIsConnected(false);
-      setError('Binance not selected in venues');
+      setError("Binance not selected in venues");
       return;
     }
 
     const connectWebSocket = async () => {
       try {
-        console.log('Connecting to Binance WebSocket...');
+        // console.log('Connecting to Binance WebSocket...');
         setError(null);
         setIsConnected(false);
 
         // Create new WebSocket service
-        wsServiceRef.current = new BinanceWebSocketService(symbol, handleSnapshot);
-        
+        wsServiceRef.current = new BinanceWebSocketService(
+          symbol,
+          handleSnapshot
+        );
+
         // Connect
         await wsServiceRef.current.connect();
         setIsConnected(true);
-        console.log('Successfully connected to Binance WebSocket');
-        
+        // console.log('Successfully connected to Binance WebSocket');
       } catch (err) {
-        console.error('Failed to connect:', err);
-        setError(err instanceof Error ? err.message : 'Failed to connect to Binance');
+        console.error("Failed to connect:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to connect to Binance"
+        );
         setIsConnected(false);
       }
     };
@@ -166,12 +183,12 @@ export function useOrderbookData(
     // Cleanup on unmount or when dependencies change
     return () => {
       if (wsServiceRef.current) {
-        console.log('Cleaning up WebSocket connection');
+        // console.log('Cleaning up WebSocket connection');
         wsServiceRef.current.disconnect();
         wsServiceRef.current = null;
       }
     };
-  }, [symbol, settings.venues, handleSnapshot]);
+  }, [symbol, settings.venues]); // Remove handleSnapshot from deps to prevent reconnects
 
   // Check connection status periodically
   useEffect(() => {
@@ -180,7 +197,7 @@ export function useOrderbookData(
         const connected = wsServiceRef.current.isConnected();
         setIsConnected(connected);
         if (!connected && !error) {
-          setError('Connection lost');
+          setError("Connection lost");
         }
       }
     }, 1000);
@@ -198,7 +215,7 @@ export function useOrderbookData(
   return {
     snapshots,
     isConnected,
-    activeVenues: settings.venues.filter(v => v === 'binance'), // Only Binance is supported for now
+    activeVenues: settings.venues.filter((v) => v === "binance"), // Only Binance is supported for now
     error,
     reconnect,
     stats,

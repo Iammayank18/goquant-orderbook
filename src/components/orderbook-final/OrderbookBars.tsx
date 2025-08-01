@@ -7,6 +7,7 @@ interface OrderbookBarsProps {
   snapshots: OrderbookSnapshot[];
   maxLevels?: number;
   maxSnapshots?: number;
+  bounds?: { x: number; y: number; z: number };
 }
 
 const OrderbookBars: React.FC<OrderbookBarsProps> = ({
@@ -72,27 +73,28 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
     });
     
     const priceRange = maxPrice - minPrice || 100;
-    // For BTC prices, we need much more aggressive scaling
-    const priceScale = 100 / priceRange; // Scale to fit within ±50 units
+    // Clamp the scale to prevent bars from going outside bounds
+    const priceScale = Math.min(0.5, 40 / priceRange); // Scale to fit within ±40 units max
 
     recentSnapshots.forEach((snapshot, timeIndex) => {
       if (!snapshot.bids?.length || !snapshot.asks?.length) return;
 
       const midPrice = (snapshot.bids[0].price + snapshot.asks[0].price) / 2;
-      const z = timeIndex * 3; // Increased spacing for better readability
+      const z = timeIndex * 2; // Market standard spacing
 
       // Process bids (green - buy orders)
       snapshot.bids.slice(0, maxLevels).forEach((bid, levelIndex) => {
-        const x = (bid.price - midPrice) * priceScale; // Dynamic scaling
-        // Improved height scaling for BTC quantities
-        const height = Math.min(20, Math.pow(bid.quantity, 0.4) * 8); // Power scaling for better distribution
-        const opacity = 0.9 - (levelIndex / maxLevels) * 0.4; // Higher base opacity
-        const position = new THREE.Vector3(x - 0.5, height / 2, z); // Slight offset for gap
+        const x = Math.max(-40, Math.min(40, (bid.price - midPrice) * priceScale)); // Clamp X position
+        // Market standard: Use actual quantity for height with log scale
+        const volumeInUSD = bid.price * bid.quantity;
+        const height = Math.min(15, Math.log10(volumeInUSD + 1) * 2); // Cap height at 15
+        const opacity = 0.95 - (levelIndex / maxLevels) * 0.3; // Professional opacity gradient
+        const position = new THREE.Vector3(x - 0.3, height / 2, z); // Professional gap
 
         bids.push({
           position,
-          scale: new THREE.Vector3(1.2, height, 1.2), // Wider, more prominent bars
-          color: new THREE.Color(0x22ff88).multiplyScalar(opacity), // Brighter green
+          scale: new THREE.Vector3(0.8, height, 0.8), // Market standard bar width
+          color: new THREE.Color(0x00d68f).multiplyScalar(opacity), // Professional green
         });
 
         // Store metadata for hover
@@ -106,16 +108,17 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
 
       // Process asks (red - sell orders)
       snapshot.asks.slice(0, maxLevels).forEach((ask, levelIndex) => {
-        const x = (ask.price - midPrice) * priceScale; // Dynamic scaling
-        // Improved height scaling for BTC quantities
-        const height = Math.min(20, Math.pow(ask.quantity, 0.4) * 8); // Power scaling for better distribution
-        const opacity = 0.9 - (levelIndex / maxLevels) * 0.4; // Higher base opacity
-        const position = new THREE.Vector3(x + 0.5, height / 2, z); // Slight offset for gap
+        const x = Math.max(-40, Math.min(40, (ask.price - midPrice) * priceScale)); // Clamp X position
+        // Market standard: Use actual quantity for height with log scale
+        const volumeInUSD = ask.price * ask.quantity;
+        const height = Math.min(15, Math.log10(volumeInUSD + 1) * 2); // Cap height at 15
+        const opacity = 0.95 - (levelIndex / maxLevels) * 0.3; // Professional opacity gradient
+        const position = new THREE.Vector3(x + 0.3, height / 2, z); // Professional gap
 
         asks.push({
           position,
-          scale: new THREE.Vector3(1.2, height, 1.2), // Wider, more prominent bars
-          color: new THREE.Color(0xff3366).multiplyScalar(opacity), // Better red color
+          scale: new THREE.Vector3(0.8, height, 0.8), // Market standard bar width
+          color: new THREE.Color(0xff4757).multiplyScalar(opacity), // Professional red
         });
 
         // Store metadata for hover
@@ -254,8 +257,8 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
           vertexColors
           transparent
           opacity={0.9}
-          emissive={new THREE.Color(0x00ff88)}
-          emissiveIntensity={0.2}
+          emissive={new THREE.Color(0x00d68f)}
+          emissiveIntensity={0.15}
           roughness={0.3}
           metalness={0.1}
         />
@@ -275,8 +278,8 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
           vertexColors
           transparent
           opacity={0.9}
-          emissive={new THREE.Color(0xff4444)}
-          emissiveIntensity={0.2}
+          emissive={new THREE.Color(0xff4757)}
+          emissiveIntensity={0.15}
           roughness={0.3}
           metalness={0.1}
         />
@@ -322,10 +325,10 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
                   ? "text-lg mb-2"
                   : "text-xl sm:text-2xl mb-3"
               } ${
-                hoveredBar.type === "bid" ? "text-green-400" : "text-red-400"
+                hoveredBar.type === "bid" ? "text-green-500" : "text-red-500"
               }`}
             >
-              {hoveredBar.type.toUpperCase()} ORDER
+              {hoveredBar.type === "bid" ? "BUY" : "SELL"} ORDER
             </div>
             <div
               className={isMobile ? "space-y-0.5" : "space-y-1 sm:space-y-2"}
@@ -399,7 +402,12 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
                       : "text-lg sm:text-xl"
                   }`}
                 >
-                  {hoveredBar.time.toLocaleTimeString()}
+                  {hoveredBar.time.toLocaleTimeString('en-US', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
                 </span>
               </div>
             </div>
@@ -407,15 +415,27 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
         </Html>
       )}
 
-      {/* Visual separator between bid and ask */}
-      <mesh position={[0, 6, Math.min(75, maxSnapshots * 1.5 / 2)]}>
+      {/* Professional spread indicator */}
+      <mesh position={[0, 0, Math.min(50, maxSnapshots)]}>
         <planeGeometry args={[0.05, 15, 1, 1]} />
         <meshBasicMaterial
-          color="#444444"
+          color="#ffffff"
           transparent
           opacity={0.3}
         />
       </mesh>
+      
+      {/* Market depth grid lines */}
+      {[0, 3, 6, 9, 12, 15].map((y, i) => (
+        <mesh key={`grid-y-${i}`} position={[0, y, Math.min(50, maxSnapshots)]}>
+          <planeGeometry args={[80, 0.02, 1, 1]} />
+          <meshBasicMaterial
+            color="#333333"
+            transparent
+            opacity={0.15}
+          />
+        </mesh>
+      ))}
     </group>
   );
 };
