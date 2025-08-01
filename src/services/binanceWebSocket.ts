@@ -44,15 +44,13 @@ export class BinanceWebSocketService {
   }
 
   async connect(): Promise<void> {
-    // console.log('Connecting to Binance for symbol:', this.symbol);
     try {
       // First, fetch the initial orderbook snapshot
       await this.fetchInitialSnapshot();
 
       // Then connect to WebSocket for real-time updates
       this.connectWebSocket();
-    } catch (error) {
-      // console.error('Failed to connect to Binance:', error);
+    } catch {
       this.scheduleReconnect();
     }
   }
@@ -60,7 +58,7 @@ export class BinanceWebSocketService {
   private async fetchInitialSnapshot(): Promise<void> {
     try {
       const url = `https://api.binance.com/api/v3/depth?symbol=${this.symbol.toUpperCase()}&limit=100`;
-      // console.log('Fetching initial snapshot from:', url);
+      console.log("BinanceWebSocket: Fetching initial snapshot from", url);
 
       const response = await fetch(url);
 
@@ -69,11 +67,11 @@ export class BinanceWebSocketService {
       }
 
       const data: BinanceDepthSnapshot = await response.json();
-      // console.log('Initial snapshot received:', {
-      //   lastUpdateId: data.lastUpdateId,
-      //   bidsCount: data.bids.length,
-      //   asksCount: data.asks.length
-      // });
+      console.log("BinanceWebSocket: Received snapshot", {
+        bidsCount: data.bids.length,
+        asksCount: data.asks.length,
+        lastUpdateId: data.lastUpdateId
+      });
 
       // Clear existing orderbook
       this.orderbook.bids.clear();
@@ -94,7 +92,7 @@ export class BinanceWebSocketService {
       // Send initial snapshot
       this.sendSnapshot();
     } catch (error) {
-      // console.error('Failed to fetch initial snapshot:', error);
+      console.error("Failed to fetch initial snapshot:", error);
       throw error;
     }
   }
@@ -105,7 +103,8 @@ export class BinanceWebSocketService {
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log("Connected to Binance WebSocket");
+      console.log("WebSocket connected to:", wsUrl);
+      // Connected to Binance WebSocket
       this.reconnectAttempts = 0;
       this.reconnectDelay = 1000;
     };
@@ -114,22 +113,29 @@ export class BinanceWebSocketService {
       try {
         const data: BinanceDepthUpdate = JSON.parse(event.data);
         this.handleDepthUpdate(data);
-      } catch (error) {
-        console.error("Failed to parse WebSocket message:", error);
+      } catch {
+        // Failed to parse WebSocket message
       }
     };
 
     this.ws.onerror = (error) => {
       console.error("WebSocket error:", error);
+      // WebSocket error
     };
 
     this.ws.onclose = () => {
-      console.log("WebSocket connection closed");
+      // WebSocket connection closed
       this.scheduleReconnect();
     };
   }
 
   private handleDepthUpdate(update: BinanceDepthUpdate): void {
+    console.log("BinanceWebSocket: Received depth update", {
+      bidsCount: update.b.length,
+      asksCount: update.a.length,
+      snapshotReceived: this.snapshotReceived
+    });
+    
     // If we haven't received the snapshot yet, queue the update
     if (!this.snapshotReceived) {
       this.pendingUpdates.push(update);
@@ -180,6 +186,11 @@ export class BinanceWebSocketService {
   }
 
   private sendSnapshot(): void {
+    console.log("BinanceWebSocket: Sending snapshot", {
+      bidsSize: this.orderbook.bids.size,
+      asksSize: this.orderbook.asks.size
+    });
+    
     // Convert maps to sorted arrays
     const bids: OrderLevel[] = Array.from(this.orderbook.bids.entries())
       .sort((a, b) => b[0] - a[0]) // Sort bids descending
@@ -233,12 +244,10 @@ export class BinanceWebSocketService {
     }
 
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      // console.error('Max reconnection attempts reached');
       return;
     }
 
     this.reconnectAttempts++;
-    // console.log(`Reconnecting in ${this.reconnectDelay}ms... (attempt ${this.reconnectAttempts})`);
 
     this.reconnectTimeout = setTimeout(() => {
       this.connect();

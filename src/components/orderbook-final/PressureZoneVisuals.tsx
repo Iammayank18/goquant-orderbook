@@ -1,8 +1,8 @@
-import React, { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
-import * as THREE from 'three';
-import { PressureZone, OrderbookSnapshot } from '@/types/orderbook';
+import React, { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import { Text } from "@react-three/drei";
+import * as THREE from "three";
+import { PressureZone, OrderbookSnapshot } from "@/types/orderbook";
 
 interface PressureZoneVisualsProps {
   zones: PressureZone[];
@@ -11,29 +11,33 @@ interface PressureZoneVisualsProps {
 
 const PressureZoneVisuals: React.FC<PressureZoneVisualsProps> = ({
   zones,
-  latestSnapshot
+  latestSnapshot,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const pulseTime = useRef(0);
-  
+
   useFrame((state, delta) => {
     pulseTime.current += delta;
-    
+
     if (groupRef.current) {
       groupRef.current.children.forEach((child, index) => {
         if (child instanceof THREE.Mesh && zones[index]) {
           const zone = zones[index];
-          const pulseFactor = 1 + Math.sin(pulseTime.current * 2 + index) * 0.05 * zone.intensity / 10;
+          const pulseFactor =
+            1 +
+            (Math.sin(pulseTime.current * 2 + index) * 0.05 * zone.intensity) /
+              10;
           child.scale.y = pulseFactor;
         }
       });
     }
   });
-  
+
   if (!zones.length || !latestSnapshot) return null;
-  
-  const midPrice = (latestSnapshot.bids[0]?.price + latestSnapshot.asks[0]?.price) / 2;
-  
+
+  const midPrice =
+    (latestSnapshot.bids[0]?.price + latestSnapshot.asks[0]?.price) / 2;
+
   return (
     <group ref={groupRef}>
       {zones.map((zone, index) => {
@@ -41,8 +45,8 @@ const PressureZoneVisuals: React.FC<PressureZoneVisualsProps> = ({
         const width = Math.abs(zone.priceRange[1] - zone.priceRange[0]) * 0.02;
         const height = Math.log10(zone.volume + 1) * 6;
         const opacity = 0.3 + (zone.intensity / 10) * 0.4;
-        const color = zone.type === 'bid' ? 0x00ff88 : 0xff4444;
-        
+        const color = zone.type === "bid" ? 0x00ff88 : 0xff4444;
+
         return (
           <group key={index}>
             {/* Main pressure zone */}
@@ -57,7 +61,7 @@ const PressureZoneVisuals: React.FC<PressureZoneVisualsProps> = ({
                 side={THREE.DoubleSide}
               />
             </mesh>
-            
+
             {/* Glow effect for high intensity */}
             {zone.intensity > 5 && (
               <mesh position={[x, height / 2, 0]}>
@@ -72,7 +76,7 @@ const PressureZoneVisuals: React.FC<PressureZoneVisualsProps> = ({
                 />
               </mesh>
             )}
-            
+
             {/* Label for significant zones */}
             {zone.intensity > 7 && (
               <Text
@@ -88,19 +92,20 @@ const PressureZoneVisuals: React.FC<PressureZoneVisualsProps> = ({
           </group>
         );
       })}
-      
+
       {/* Pressure balance indicator */}
       <group position={[0, 25, 0]}>
         {(() => {
           const bidPressure = zones
-            .filter(z => z.type === 'bid')
+            .filter((z) => z.type === "bid")
             .reduce((sum, z) => sum + z.intensity * z.volume, 0);
           const askPressure = zones
-            .filter(z => z.type === 'ask')
+            .filter((z) => z.type === "ask")
             .reduce((sum, z) => sum + z.intensity * z.volume, 0);
           const totalPressure = bidPressure + askPressure;
-          const balance = totalPressure > 0 ? (bidPressure - askPressure) / totalPressure : 0;
-          
+          const balance =
+            totalPressure > 0 ? (bidPressure - askPressure) / totalPressure : 0;
+
           return (
             <>
               <mesh>

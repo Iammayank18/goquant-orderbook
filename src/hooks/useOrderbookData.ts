@@ -45,20 +45,20 @@ export function useOrderbookData(
   // Handle new snapshot from WebSocket - Memoized to prevent recreating
   const handleSnapshot = useCallback(
     (snapshot: OrderbookSnapshot) => {
-      console.log("Received snapshot from Binance:", {
-        timestamp: new Date(snapshot.timestamp).toISOString(),
-        bidCount: snapshot.bids.length,
-        askCount: snapshot.asks.length,
-        topBid: snapshot.bids[0],
-        topAsk: snapshot.asks[0],
+      console.log("useOrderbookData: Received snapshot", {
+        bids: snapshot.bids?.length,
+        asks: snapshot.asks?.length,
+        timestamp: snapshot.timestamp
       });
-
+      
       // Update stats
       messagesCount.current++;
       bytesCount.current += JSON.stringify(snapshot).length;
 
       // Apply filters
       let filteredSnapshot = { ...snapshot };
+      const originalBidsCount = snapshot.bids?.length || 0;
+      const originalAsksCount = snapshot.asks?.length || 0;
 
       if (settings.priceRange[0] > 0 || settings.priceRange[1] < 100000) {
         filteredSnapshot.bids = snapshot.bids.filter(
@@ -82,12 +82,31 @@ export function useOrderbookData(
         );
       }
 
+      // Log filter effects
+      console.log("useOrderbookData: Filter effects", {
+        priceRange: settings.priceRange,
+        quantityThreshold: settings.quantityThreshold,
+        originalBids: originalBidsCount,
+        filteredBids: filteredSnapshot.bids?.length || 0,
+        originalAsks: originalAsksCount,
+        filteredAsks: filteredSnapshot.asks?.length || 0,
+        bidsRemoved: originalBidsCount - (filteredSnapshot.bids?.length || 0),
+        asksRemoved: originalAsksCount - (filteredSnapshot.asks?.length || 0)
+      });
+
       setSnapshots((prev) => {
         const cutoffTime = Date.now() - settings.timeRange * 1000;
         const filtered = [...prev, filteredSnapshot].filter(
           (s) => s.timestamp > cutoffTime
         );
-        return filtered.slice(-200); // Keep last 200 snapshots max
+        const result = filtered.slice(-200); // Keep last 200 snapshots max
+        console.log("useOrderbookData: Updated snapshots", {
+          prevLength: prev.length,
+          newLength: result.length,
+          cutoffTime: new Date(cutoffTime).toISOString(),
+          timeRange: settings.timeRange
+        });
+        return result;
       });
     },
     [settings.priceRange, settings.quantityThreshold, settings.timeRange]
@@ -155,7 +174,6 @@ export function useOrderbookData(
 
     const connectWebSocket = async () => {
       try {
-        // console.log('Connecting to Binance WebSocket...');
         setError(null);
         setIsConnected(false);
 
@@ -168,9 +186,8 @@ export function useOrderbookData(
         // Connect
         await wsServiceRef.current.connect();
         setIsConnected(true);
-        // console.log('Successfully connected to Binance WebSocket');
       } catch (err) {
-        console.error("Failed to connect:", err);
+        // Failed to connect
         setError(
           err instanceof Error ? err.message : "Failed to connect to Binance"
         );
@@ -183,7 +200,6 @@ export function useOrderbookData(
     // Cleanup on unmount or when dependencies change
     return () => {
       if (wsServiceRef.current) {
-        // console.log('Cleaning up WebSocket connection');
         wsServiceRef.current.disconnect();
         wsServiceRef.current = null;
       }

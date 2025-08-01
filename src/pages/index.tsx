@@ -39,6 +39,7 @@ import {
   Info,
   RefreshCw,
 } from "lucide-react";
+import FilterStatus from "@/components/FilterStatus";
 
 // Lazy load heavy components
 const Orderbook3DScene = dynamic(
@@ -53,6 +54,11 @@ const ProfessionalControlPanel = dynamic(
 
 const ProfessionalLegend = dynamic(
   () => import("@/components/orderbook-professional/ProfessionalLegend"),
+  { ssr: false }
+);
+
+const ExportDialog = dynamic(
+  () => import("@/components/orderbook-professional/ExportDialog"),
   { ssr: false }
 );
 
@@ -74,6 +80,13 @@ export default function OrderbookProfessionalPage() {
   const [showLegend, setShowLegend] = useState(true);
   const [isInteracting, setIsInteracting] = useState(false);
   const [isDark, setIsDark] = useState(true);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [filterStats, setFilterStats] = useState({
+    totalBids: 0,
+    filteredBids: 0,
+    totalAsks: 0,
+    filteredAsks: 0,
+  });
 
   // Responsive breakpoints
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -138,8 +151,8 @@ export default function OrderbookProfessionalPage() {
       try {
         const zones = pressureZoneDetector.detectPressureZones(snapshot);
         allZones.push(...zones);
-      } catch (error) {
-        // console.error("Error detecting pressure zones:", error);
+      } catch {
+        // Error detecting pressure zones
       }
     });
 
@@ -279,6 +292,7 @@ export default function OrderbookProfessionalPage() {
                           stats={stats}
                           onViewSettingsChange={setViewSettings}
                           onFilterSettingsChange={setFilterSettings}
+                          onExportClick={() => setShowExportDialog(true)}
                         />
                       </div>
                     </SheetContent>
@@ -381,6 +395,7 @@ export default function OrderbookProfessionalPage() {
                           stats={stats}
                           onViewSettingsChange={setViewSettings}
                           onFilterSettingsChange={setFilterSettings}
+                          onExportClick={() => setShowExportDialog(true)}
                         />
                       </div>
                     </SheetContent>
@@ -599,6 +614,27 @@ export default function OrderbookProfessionalPage() {
           )}
         </div>
       </div>
+
+      {/* Filter Status */}
+      <FilterStatus
+        filterSettings={filterSettings}
+        totalBids={50} // This should come from raw data
+        filteredBids={snapshots[snapshots.length - 1]?.bids?.length || 0}
+        totalAsks={50} // This should come from raw data  
+        filteredAsks={snapshots[snapshots.length - 1]?.asks?.length || 0}
+      />
+
+      {/* Export Dialog */}
+      {showExportDialog && (
+        <ExportDialog
+          open={showExportDialog}
+          onOpenChange={setShowExportDialog}
+          snapshots={snapshots}
+          pressureZones={pressureZones}
+          symbol={symbol}
+          venue={activeVenues[0] || "binance"}
+        />
+      )}
     </div>
   );
 }

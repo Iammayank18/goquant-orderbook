@@ -23,6 +23,9 @@ export interface PressureZone {
   type: 'bid' | 'ask';
   intensity: number;
   priceRange: [number, number];
+  minPrice?: number;
+  maxPrice?: number;
+  totalVolume?: number;
 }
 
 export interface VenueConfig {

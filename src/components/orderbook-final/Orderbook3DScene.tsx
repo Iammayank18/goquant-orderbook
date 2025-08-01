@@ -14,6 +14,7 @@ import AxesHelper from "./AxesHelper";
 import OrderFlowParticles from "./OrderFlowParticles";
 import ImbalanceIndicator from "./ImbalanceIndicator";
 import SpreadVisualization from "./SpreadVisualization";
+import CumulativeDepthView from "./CumulativeDepthView";
 
 interface ViewSettings {
   autoRotate: boolean;
@@ -40,6 +41,13 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
   filterSettings,
   isMobile = false,
 }) => {
+  console.log("Orderbook3DScene: Rendering with", {
+    snapshotsLength: snapshots.length,
+    pressureZonesLength: pressureZones.length,
+    viewSettings,
+    filterSettings
+  });
+  
   const groupRef = useRef<THREE.Group>(null);
   const sceneRef = useRef<THREE.Scene>(null);
 
@@ -166,6 +174,11 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
         {/* Spread visualization */}
         {viewSettings.showSpread && (
           <SpreadVisualization snapshots={snapshots} />
+        )}
+
+        {/* Cumulative depth visualization */}
+        {filterSettings.showVolumeProfile && (
+          <CumulativeDepthView snapshots={snapshots} bounds={sceneBounds} />
         )}
       </group>
 

@@ -26,7 +26,6 @@ import { FilterSettings, VenueType } from "@/types/orderbook";
 import { VENUE_CONFIGS } from "@/utils/venueConfig";
 import { cn } from "@/lib/utils";
 import {
-  Eye,
   Grid3x3,
   RotateCw,
   Activity,
@@ -34,11 +33,10 @@ import {
   Zap,
   GitBranch,
   BarChart3,
-  Clock,
   Download,
   Upload,
   RefreshCw,
-  Save,
+  FileDown,
 } from "lucide-react";
 
 interface ViewSettings {
@@ -62,6 +60,7 @@ interface ProfessionalControlPanelProps {
   };
   onViewSettingsChange: (settings: ViewSettings) => void;
   onFilterSettingsChange: (settings: FilterSettings) => void;
+  onExportClick?: () => void;
 }
 
 const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
@@ -70,6 +69,7 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
   stats,
   onViewSettingsChange,
   onFilterSettingsChange,
+  onExportClick,
 }) => {
   const handleViewToggle = (key: keyof ViewSettings) => {
     if (typeof viewSettings[key] === "boolean") {
@@ -106,7 +106,9 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
       <TabsContent value="view" className="space-y-4 mt-4">
         <Card className="border-border bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-card-foreground">Display Options</CardTitle>
+            <CardTitle className="text-base font-semibold text-card-foreground">
+              Display Options
+            </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
               Control what elements are visible in the 3D view
             </CardDescription>
@@ -225,21 +227,28 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
       <TabsContent value="filter" className="space-y-4 mt-4">
         <Card className="border-border bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-card-foreground">Data Sources</CardTitle>
+            <CardTitle className="text-base font-semibold text-card-foreground">
+              Data Sources
+            </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
               Select which venues to display data from
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
-              <p className="font-medium text-blue-700 dark:text-blue-300 text-sm">Real-Time Data</p>
+              <p className="font-medium text-blue-700 dark:text-blue-300 text-sm">
+                Real-Time Data
+              </p>
               <p className="text-xs mt-1 text-blue-600 dark:text-blue-400">
                 Currently only Binance is supported for live orderbook data
               </p>
             </div>
 
             {Object.entries(VENUE_CONFIGS).map(([venue, config]) => (
-              <div key={venue} className="flex items-center justify-between">
+              <div
+                key={venue}
+                className="flex items-center justify-between py-2"
+              >
                 <div className="flex items-center gap-3">
                   <Checkbox
                     id={venue}
@@ -248,20 +257,24 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
                       handleVenueToggle(venue as VenueType)
                     }
                     disabled={venue !== "binance"}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
                   <Label
                     htmlFor={venue}
                     className={cn(
-                      "cursor-pointer",
-                      venue !== "binance" && "opacity-50"
+                      "cursor-pointer text-sm font-medium",
+                      venue !== "binance" && "opacity-50 cursor-not-allowed"
                     )}
                   >
                     {config.name}
                   </Label>
-                  <Badge variant="outline" className="text-xs">
-                    {venue === "binance" ? "Live" : "Coming Soon"}
-                  </Badge>
                 </div>
+                <Badge
+                  variant={venue === "binance" ? "default" : "secondary"}
+                  className="text-xs"
+                >
+                  {venue === "binance" ? "Live" : "Coming Soon"}
+                </Badge>
               </div>
             ))}
           </CardContent>
@@ -269,8 +282,12 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
 
         <Card className="border-border bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-card-foreground">Data Filters</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">Fine-tune what data is displayed</CardDescription>
+            <CardTitle className="text-base font-semibold text-card-foreground">
+              Data Filters
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Fine-tune what data is displayed
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Price Range */}
@@ -379,8 +396,12 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
       <TabsContent value="performance" className="space-y-4 mt-4">
         <Card className="border-border bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-card-foreground">Performance Metrics</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">Real-time performance statistics</CardDescription>
+            <CardTitle className="text-base font-semibold text-card-foreground">
+              Performance Metrics
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Real-time performance statistics
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Data Processing */}
@@ -437,7 +458,9 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
         {/* Actions */}
         <Card className="border-border bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-card-foreground">Actions</CardTitle>
+            <CardTitle className="text-base font-semibold text-card-foreground">
+              Actions
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button
@@ -447,6 +470,15 @@ const ProfessionalControlPanel: React.FC<ProfessionalControlPanelProps> = ({
             >
               <RefreshCw className="h-4 w-4" />
               Reset View
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start gap-2"
+              onClick={onExportClick}
+            >
+              <FileDown className="h-4 w-4" />
+              Export Data
             </Button>
             <Button
               variant="outline"

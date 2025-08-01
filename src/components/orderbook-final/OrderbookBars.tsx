@@ -42,6 +42,12 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
 
   // Process snapshots into bar data with metadata
   const { bidBars, askBars, barMetadata } = useMemo(() => {
+    console.log("OrderbookBars: Processing snapshots", {
+      snapshotsLength: snapshots.length,
+      firstSnapshot: snapshots[0],
+      lastSnapshot: snapshots[snapshots.length - 1]
+    });
+    
     const bids: Array<{
       position: THREE.Vector3;
       scale: THREE.Vector3;
@@ -77,13 +83,20 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
     const priceScale = Math.min(0.5, 40 / priceRange); // Scale to fit within ±40 units max
 
     recentSnapshots.forEach((snapshot, timeIndex) => {
-      if (!snapshot.bids?.length || !snapshot.asks?.length) return;
+      if (!snapshot.bids?.length || !snapshot.asks?.length) {
+        console.log("OrderbookBars: Skipping snapshot with no bids/asks", snapshot);
+        return;
+      }
 
       const midPrice = (snapshot.bids[0].price + snapshot.asks[0].price) / 2;
       const z = timeIndex * 2; // Market standard spacing
 
       // Process bids (green - buy orders)
       snapshot.bids.slice(0, maxLevels).forEach((bid, levelIndex) => {
+        // Log each bid to see if it's being processed
+        if (timeIndex === recentSnapshots.length - 1) { // Only log latest snapshot
+          console.log(`Bid ${levelIndex}: Price ${bid.price}, Qty ${bid.quantity}`);
+        }
         const x = Math.max(-40, Math.min(40, (bid.price - midPrice) * priceScale)); // Clamp X position
         // Market standard: Use actual quantity for height with log scale
         const volumeInUSD = bid.price * bid.quantity;
@@ -129,6 +142,13 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
           type: "ask",
         });
       });
+    });
+
+    console.log("OrderbookBars: Processed bars", {
+      bidBarsCount: bids.length,
+      askBarsCount: asks.length,
+      sampleBid: bids[0],
+      sampleAsk: asks[0]
     });
 
     return { bidBars: bids, askBars: asks, barMetadata: metadata };
@@ -254,7 +274,7 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
       >
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial
-          vertexColors
+          color={new THREE.Color(0x00d68f)}
           transparent
           opacity={0.9}
           emissive={new THREE.Color(0x00d68f)}
@@ -275,7 +295,7 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
       >
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial
-          vertexColors
+          color={new THREE.Color(0xff4757)}
           transparent
           opacity={0.9}
           emissive={new THREE.Color(0xff4757)}
