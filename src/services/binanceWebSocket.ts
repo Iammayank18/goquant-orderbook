@@ -58,7 +58,6 @@ export class BinanceWebSocketService {
   private async fetchInitialSnapshot(): Promise<void> {
     try {
       const url = `https://api.binance.com/api/v3/depth?symbol=${this.symbol.toUpperCase()}&limit=100`;
-      console.log("BinanceWebSocket: Fetching initial snapshot from", url);
 
       const response = await fetch(url);
 
@@ -67,11 +66,6 @@ export class BinanceWebSocketService {
       }
 
       const data: BinanceDepthSnapshot = await response.json();
-      console.log("BinanceWebSocket: Received snapshot", {
-        bidsCount: data.bids.length,
-        asksCount: data.asks.length,
-        lastUpdateId: data.lastUpdateId
-      });
 
       // Clear existing orderbook
       this.orderbook.bids.clear();
@@ -92,7 +86,6 @@ export class BinanceWebSocketService {
       // Send initial snapshot
       this.sendSnapshot();
     } catch (error) {
-      console.error("Failed to fetch initial snapshot:", error);
       throw error;
     }
   }
@@ -103,7 +96,6 @@ export class BinanceWebSocketService {
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log("WebSocket connected to:", wsUrl);
       // Connected to Binance WebSocket
       this.reconnectAttempts = 0;
       this.reconnectDelay = 1000;
@@ -118,8 +110,7 @@ export class BinanceWebSocketService {
       }
     };
 
-    this.ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
+    this.ws.onerror = () => {
       // WebSocket error
     };
 
@@ -130,12 +121,6 @@ export class BinanceWebSocketService {
   }
 
   private handleDepthUpdate(update: BinanceDepthUpdate): void {
-    console.log("BinanceWebSocket: Received depth update", {
-      bidsCount: update.b.length,
-      asksCount: update.a.length,
-      snapshotReceived: this.snapshotReceived
-    });
-    
     // If we haven't received the snapshot yet, queue the update
     if (!this.snapshotReceived) {
       this.pendingUpdates.push(update);
@@ -186,11 +171,6 @@ export class BinanceWebSocketService {
   }
 
   private sendSnapshot(): void {
-    console.log("BinanceWebSocket: Sending snapshot", {
-      bidsSize: this.orderbook.bids.size,
-      asksSize: this.orderbook.asks.size
-    });
-    
     // Convert maps to sorted arrays
     const bids: OrderLevel[] = Array.from(this.orderbook.bids.entries())
       .sort((a, b) => b[0] - a[0]) // Sort bids descending

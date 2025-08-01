@@ -66,6 +66,12 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
     // Only process recent snapshots
     const recentSnapshots = snapshots.slice(-maxSnapshots);
     
+    // Early return if no snapshots
+    if (recentSnapshots.length === 0) {
+      console.log("OrderbookBars: No snapshots to process");
+      return { bidBars: [], askBars: [], barMetadata: new Map() };
+    }
+    
     // Calculate price range for dynamic scaling
     let minPrice = Infinity;
     let maxPrice = -Infinity;
@@ -156,7 +162,15 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
 
   // Update instanced meshes
   useEffect(() => {
-    if (!bidMeshRef.current || !askMeshRef.current) return;
+    if (!bidMeshRef.current || !askMeshRef.current) {
+      console.log("OrderbookBars: Mesh refs not ready");
+      return;
+    }
+
+    console.log("OrderbookBars: Updating instances", {
+      bidBarsLength: bidBars.length,
+      askBarsLength: askBars.length
+    });
 
     const tempObject = new THREE.Object3D();
     const maxInstances = 1000;
@@ -169,7 +183,6 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
         tempObject.scale.copy(bar.scale);
         tempObject.updateMatrix();
         bidMeshRef.current.setMatrixAt(i, tempObject.matrix);
-        bidMeshRef.current.setColorAt(i, bar.color);
       } else {
         // Hide unused instances
         tempObject.position.set(0, -1000, 0);
@@ -179,9 +192,6 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
       }
     }
     bidMeshRef.current.instanceMatrix.needsUpdate = true;
-    if (bidMeshRef.current.instanceColor) {
-      bidMeshRef.current.instanceColor.needsUpdate = true;
-    }
 
     // Update ask instances
     for (let i = 0; i < maxInstances; i++) {
@@ -191,7 +201,6 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
         tempObject.scale.copy(bar.scale);
         tempObject.updateMatrix();
         askMeshRef.current.setMatrixAt(i, tempObject.matrix);
-        askMeshRef.current.setColorAt(i, bar.color);
       } else {
         // Hide unused instances
         tempObject.position.set(0, -1000, 0);
@@ -201,9 +210,6 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
       }
     }
     askMeshRef.current.instanceMatrix.needsUpdate = true;
-    if (askMeshRef.current.instanceColor) {
-      askMeshRef.current.instanceColor.needsUpdate = true;
-    }
   }, [bidBars, askBars]);
 
   // Handle hover detection
@@ -267,6 +273,7 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
       <instancedMesh
         ref={bidMeshRef}
         args={[undefined, undefined, 1000]}
+        frustumCulled={false}
         castShadow
         receiveShadow
         onPointerMove={(e) => handlePointerMove(e, "bid")}
@@ -288,6 +295,7 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
       <instancedMesh
         ref={askMeshRef}
         args={[undefined, undefined, 1000]}
+        frustumCulled={false}
         castShadow
         receiveShadow
         onPointerMove={(e) => handlePointerMove(e, "ask")}

@@ -7,7 +7,7 @@ import {
   PressureZone,
   FilterSettings,
 } from "@/types/orderbook";
-import OrderbookBars from "./OrderbookBars";
+import OrderbookBarsFixed from "./OrderbookBarsFixed";
 import PressureZoneVisuals from "./PressureZoneVisuals";
 import VolumeProfile from "./VolumeProfile";
 import AxesHelper from "./AxesHelper";
@@ -141,7 +141,7 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
         )}
 
         {/* Orderbook bars - reduced for clarity */}
-        <OrderbookBars
+        <OrderbookBarsFixed
           snapshots={snapshots}
           maxLevels={isMobile ? 8 : 15}
           maxSnapshots={isMobile ? 15 : 25}
