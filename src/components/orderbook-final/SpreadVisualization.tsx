@@ -5,10 +5,9 @@ import { OrderbookSnapshot } from '@/types/orderbook';
 
 interface SpreadVisualizationProps {
   snapshots: OrderbookSnapshot[];
-  theme: 'dark' | 'light';
 }
 
-const SpreadVisualization: React.FC<SpreadVisualizationProps> = ({ snapshots, theme }) => {
+const SpreadVisualization: React.FC<SpreadVisualizationProps> = ({ snapshots }) => {
   const spreadData = useMemo(() => {
     const recentSnapshots = snapshots.slice(-50);
     
@@ -33,8 +32,8 @@ const SpreadVisualization: React.FC<SpreadVisualizationProps> = ({ snapshots, th
   
   if (spreadData.length === 0) return null;
   
-  const lineColor = theme === 'dark' ? '#ffff00' : '#ff8800';
-  const textColor = theme === 'dark' ? '#ffffff' : '#000000';
+  const lineColor = '#ffff00'; // Yellow in dark mode via CSS
+  const textColor = '#ffffff'; // Will be handled by dark mode
   
   return (
     <group>

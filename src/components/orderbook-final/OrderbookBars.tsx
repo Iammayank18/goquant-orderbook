@@ -5,14 +5,12 @@ import { Html } from "@react-three/drei";
 
 interface OrderbookBarsProps {
   snapshots: OrderbookSnapshot[];
-  theme: "dark" | "light";
   maxLevels?: number;
   maxSnapshots?: number;
 }
 
 const OrderbookBars: React.FC<OrderbookBarsProps> = ({
   snapshots,
-  theme,
   maxLevels = 20,
   maxSnapshots = 50,
 }) => {
@@ -74,25 +72,27 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
     });
     
     const priceRange = maxPrice - minPrice || 100;
-    const priceScale = Math.min(0.02, 60 / priceRange); // Dynamic scaling to fit within ±30 units
+    // For BTC prices, we need much more aggressive scaling
+    const priceScale = 100 / priceRange; // Scale to fit within ±50 units
 
     recentSnapshots.forEach((snapshot, timeIndex) => {
       if (!snapshot.bids?.length || !snapshot.asks?.length) return;
 
       const midPrice = (snapshot.bids[0].price + snapshot.asks[0].price) / 2;
-      const z = timeIndex * 1.5; // Further reduced spacing along time axis
+      const z = timeIndex * 3; // Increased spacing for better readability
 
-      // Process bids
+      // Process bids (green - buy orders)
       snapshot.bids.slice(0, maxLevels).forEach((bid, levelIndex) => {
         const x = (bid.price - midPrice) * priceScale; // Dynamic scaling
-        const height = Math.min(12, Math.log10(bid.quantity + 1) * 2.5); // Reduced height scale
-        const opacity = 1 - (levelIndex / maxLevels) * 0.5;
-        const position = new THREE.Vector3(x, height / 2, z);
+        // Improved height scaling for BTC quantities
+        const height = Math.min(20, Math.pow(bid.quantity, 0.4) * 8); // Power scaling for better distribution
+        const opacity = 0.9 - (levelIndex / maxLevels) * 0.4; // Higher base opacity
+        const position = new THREE.Vector3(x - 0.5, height / 2, z); // Slight offset for gap
 
         bids.push({
           position,
-          scale: new THREE.Vector3(0.5, height, 0.5),
-          color: new THREE.Color(0x00ff88).multiplyScalar(opacity),
+          scale: new THREE.Vector3(1.2, height, 1.2), // Wider, more prominent bars
+          color: new THREE.Color(0x22ff88).multiplyScalar(opacity), // Brighter green
         });
 
         // Store metadata for hover
@@ -104,17 +104,18 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
         });
       });
 
-      // Process asks
+      // Process asks (red - sell orders)
       snapshot.asks.slice(0, maxLevels).forEach((ask, levelIndex) => {
         const x = (ask.price - midPrice) * priceScale; // Dynamic scaling
-        const height = Math.min(12, Math.log10(ask.quantity + 1) * 2.5); // Reduced height scale
-        const opacity = 1 - (levelIndex / maxLevels) * 0.5;
-        const position = new THREE.Vector3(x, height / 2, z);
+        // Improved height scaling for BTC quantities
+        const height = Math.min(20, Math.pow(ask.quantity, 0.4) * 8); // Power scaling for better distribution
+        const opacity = 0.9 - (levelIndex / maxLevels) * 0.4; // Higher base opacity
+        const position = new THREE.Vector3(x + 0.5, height / 2, z); // Slight offset for gap
 
         asks.push({
           position,
-          scale: new THREE.Vector3(0.5, height, 0.5),
-          color: new THREE.Color(0xff4444).multiplyScalar(opacity),
+          scale: new THREE.Vector3(1.2, height, 1.2), // Wider, more prominent bars
+          color: new THREE.Color(0xff3366).multiplyScalar(opacity), // Better red color
         });
 
         // Store metadata for hover
@@ -298,11 +299,7 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
           <div
             className={`${
               isMobile ? "p-2" : isTablet ? "p-3" : "p-4 sm:p-6"
-            } rounded-xl sm:rounded-2xl shadow-2xl whitespace-nowrap backdrop-blur-md ${
-              theme === "dark"
-                ? "bg-gray-900/95 text-white border-gray-700"
-                : "bg-white/95 text-gray-900 border-gray-300"
-            } border-2 ${
+            } rounded-xl sm:rounded-2xl shadow-2xl whitespace-nowrap backdrop-blur-md bg-white/95 text-gray-900 border-gray-300 dark:bg-gray-900/95 dark:text-white dark:border-gray-700 border-2 ${
               hoveredBar.type === "bid"
                 ? `${isMobile ? "ring-2" : "ring-4"} ring-green-500/30`
                 : `${isMobile ? "ring-2" : "ring-4"} ring-red-500/30`
@@ -414,7 +411,7 @@ const OrderbookBars: React.FC<OrderbookBarsProps> = ({
       <mesh position={[0, 6, Math.min(75, maxSnapshots * 1.5 / 2)]}>
         <planeGeometry args={[0.05, 15, 1, 1]} />
         <meshBasicMaterial
-          color={theme === "dark" ? "#444444" : "#cccccc"}
+          color="#444444"
           transparent
           opacity={0.3}
         />

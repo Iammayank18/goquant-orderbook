@@ -5,7 +5,6 @@ import { OrderbookSnapshot } from '@/types/orderbook';
 
 interface VolumeProfileProps {
   snapshots: OrderbookSnapshot[];
-  theme: 'dark' | 'light';
   priceBins?: number;
 }
 
@@ -18,7 +17,6 @@ interface VolumeNode {
 
 const VolumeProfile: React.FC<VolumeProfileProps> = ({
   snapshots,
-  theme,
   priceBins = 30
 }) => {
   const volumeProfile = useMemo(() => {
@@ -198,7 +196,7 @@ const VolumeProfile: React.FC<VolumeProfileProps> = ({
           <Text
             position={[(poc.price - midPrice) * 0.02, 4, -10]}
             fontSize={0.6}
-            color={theme === 'dark' ? '#ffffff' : '#000000'}
+            color="#ffffff"
             anchorX="center"
           >
             POC: ${poc.price.toFixed(0)}
@@ -210,7 +208,7 @@ const VolumeProfile: React.FC<VolumeProfileProps> = ({
       <Text
         position={[0, -2, -25]}
         fontSize={0.8}
-        color={theme === 'dark' ? '#ffffff' : '#000000'}
+        color="#ffffff"
         anchorX="center"
       >
         Volume Profile

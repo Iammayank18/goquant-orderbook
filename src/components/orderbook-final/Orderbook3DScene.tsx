@@ -30,7 +30,6 @@ interface Orderbook3DSceneProps {
   pressureZones: PressureZone[];
   viewSettings: ViewSettings;
   filterSettings: FilterSettings;
-  theme: "dark" | "light";
   isMobile?: boolean;
 }
 
@@ -39,7 +38,6 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
   pressureZones,
   viewSettings,
   filterSettings,
-  theme,
   isMobile = false,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
@@ -72,7 +70,6 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
     }
   });
 
-
   // Calculate scene bounds for better camera positioning
   const sceneBounds = useMemo(() => {
     if (snapshots.length === 0) return { x: 40, y: 15, z: 100 };
@@ -93,30 +90,37 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
 
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={theme === "dark" ? 0.4 : 0.6} />
-      <pointLight
-        position={[20, 40, 20]}
-        intensity={theme === "dark" ? 0.8 : 1}
+      {/* Enhanced Lighting for better visibility */}
+      <ambientLight intensity={0.6} />
+      <directionalLight
+        position={[30, 50, 30]}
+        intensity={0.8}
         castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
       />
       <directionalLight
-        position={[-20, 30, -20]}
-        intensity={theme === "dark" ? 0.4 : 0.6}
+        position={[-30, 40, -30]}
+        intensity={0.4}
+        color="#87CEEB"
       />
+      <pointLight position={[0, 60, 0]} intensity={0.5} />
 
-      {/* Grid */}
+      {/* Fog for depth perception */}
+      <fog attach="fog" args={['#0a0a0f', 100, 300]} />
+
+      {/* Grid with better styling */}
       {viewSettings.showGrid && (
         <Grid
-          args={[150, 150]}
+          args={[200, 200]}
           position={[0, -0.1, 0]}
-          cellSize={5}
-          cellThickness={0.5}
-          cellColor={theme === "dark" ? "#1a1a1a" : "#e5e5e5"}
-          sectionSize={25}
-          sectionThickness={1}
-          sectionColor={theme === "dark" ? "#404040" : "#cccccc"}
-          fadeDistance={100}
+          cellSize={10}
+          cellThickness={0.6}
+          cellColor="#1a1a2e"
+          sectionSize={50}
+          sectionThickness={1.5}
+          sectionColor="#16213e"
+          fadeDistance={150}
           fadeStrength={1}
         />
       )}
@@ -125,19 +129,14 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
       <group ref={groupRef}>
         {/* Axes */}
         {viewSettings.showAxes && (
-          <AxesHelper
-            bounds={sceneBounds}
-            theme={theme}
-            snapshots={snapshots}
-          />
+          <AxesHelper bounds={sceneBounds} snapshots={snapshots} />
         )}
 
-        {/* Orderbook bars */}
+        {/* Orderbook bars - reduced for clarity */}
         <OrderbookBars
           snapshots={snapshots}
-          theme={theme}
-          maxLevels={isMobile ? 10 : 20}
-          maxSnapshots={isMobile ? 30 : 50}
+          maxLevels={isMobile ? 8 : 15}
+          maxSnapshots={isMobile ? 15 : 25}
         />
 
         {/* Pressure zones */}
@@ -145,28 +144,27 @@ const Orderbook3DScene: React.FC<Orderbook3DSceneProps> = ({
           <PressureZoneVisuals
             zones={pressureZones}
             latestSnapshot={snapshots[snapshots.length - 1]}
-            theme={theme}
           />
         )}
 
         {/* Volume profile */}
         {filterSettings.showVolumeProfile && (
-          <VolumeProfile snapshots={snapshots} theme={theme} />
+          <VolumeProfile snapshots={snapshots} />
         )}
 
         {/* Order flow particles */}
         {viewSettings.showOrderFlow && (
-          <OrderFlowParticles snapshots={snapshots} theme={theme} />
+          <OrderFlowParticles snapshots={snapshots} />
         )}
 
         {/* Imbalance indicator */}
         {viewSettings.showImbalance && (
-          <ImbalanceIndicator snapshots={snapshots} theme={theme} />
+          <ImbalanceIndicator snapshots={snapshots} />
         )}
 
         {/* Spread visualization */}
         {viewSettings.showSpread && (
-          <SpreadVisualization snapshots={snapshots} theme={theme} />
+          <SpreadVisualization snapshots={snapshots} />
         )}
       </group>
 

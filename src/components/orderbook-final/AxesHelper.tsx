@@ -5,14 +5,13 @@ import { OrderbookSnapshot } from '@/types/orderbook';
 
 interface AxesHelperProps {
   bounds: { x: number; y: number; z: number };
-  theme: 'dark' | 'light';
   snapshots?: OrderbookSnapshot[];
 }
 
-const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, theme, snapshots }) => {
-  const axisColor = theme === 'dark' ? '#666666' : '#999999';
-  const textColor = theme === 'dark' ? '#ffffff' : '#000000';
-  const labelColor = theme === 'dark' ? '#cccccc' : '#333333';
+const AxesHelper: React.FC<AxesHelperProps> = ({ bounds, snapshots }) => {
+  const axisColor = '#666666'; // Will be styled via CSS for light mode
+  const textColor = '#ffffff'; // Will be styled via CSS for light mode
+  const labelColor = '#cccccc'; // Will be styled via CSS for light mode
   
   // Calculate price labels based on actual data
   const priceLabels = useMemo(() => {

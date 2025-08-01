@@ -5,7 +5,6 @@ import { OrderbookSnapshot } from '@/types/orderbook';
 
 interface OrderFlowParticlesProps {
   snapshots: OrderbookSnapshot[];
-  theme: 'dark' | 'light';
   particleCount?: number;
 }
 
@@ -21,7 +20,6 @@ interface Particle {
 
 const OrderFlowParticles: React.FC<OrderFlowParticlesProps> = ({
   snapshots,
-  theme,
   particleCount = 100
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
@@ -123,7 +121,7 @@ const OrderFlowParticles: React.FC<OrderFlowParticlesProps> = ({
         vertexColors
         transparent
         opacity={0.8}
-        emissive={theme === 'dark' ? 0xffffff : 0x000000}
+        emissive={0xffffff}
         emissiveIntensity={0.1}
         blending={THREE.AdditiveBlending}
       />

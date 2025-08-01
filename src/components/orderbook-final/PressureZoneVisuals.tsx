@@ -7,13 +7,11 @@ import { PressureZone, OrderbookSnapshot } from '@/types/orderbook';
 interface PressureZoneVisualsProps {
   zones: PressureZone[];
   latestSnapshot?: OrderbookSnapshot;
-  theme: 'dark' | 'light';
 }
 
 const PressureZoneVisuals: React.FC<PressureZoneVisualsProps> = ({
   zones,
-  latestSnapshot,
-  theme
+  latestSnapshot
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const pulseTime = useRef(0);
@@ -80,7 +78,7 @@ const PressureZoneVisuals: React.FC<PressureZoneVisualsProps> = ({
               <Text
                 position={[x, height + 2, 0]}
                 fontSize={0.8}
-                color={theme === 'dark' ? '#ffffff' : '#000000'}
+                color="#ffffff"
                 anchorX="center"
                 anchorY="bottom"
               >
@@ -107,7 +105,7 @@ const PressureZoneVisuals: React.FC<PressureZoneVisualsProps> = ({
             <>
               <mesh>
                 <boxGeometry args={[20, 1, 0.5]} />
-                <meshStandardMaterial color={theme === 'dark' ? '#333333' : '#cccccc'} />
+                <meshStandardMaterial color="#333333" />
               </mesh>
               <mesh position={[balance * 10, 0, 0.1]}>
                 <boxGeometry args={[1, 1.5, 0.5]} />
@@ -120,7 +118,7 @@ const PressureZoneVisuals: React.FC<PressureZoneVisualsProps> = ({
               <Text
                 position={[0, 2, 0]}
                 fontSize={0.8}
-                color={theme === 'dark' ? '#ffffff' : '#000000'}
+                color="#ffffff"
                 anchorX="center"
               >
                 Balance: {(balance * 100).toFixed(1)}%

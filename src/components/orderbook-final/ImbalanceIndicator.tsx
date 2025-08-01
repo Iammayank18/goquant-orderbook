@@ -5,12 +5,10 @@ import { OrderbookSnapshot } from '@/types/orderbook';
 
 interface ImbalanceIndicatorProps {
   snapshots: OrderbookSnapshot[];
-  theme: 'dark' | 'light';
 }
 
 const ImbalanceIndicator: React.FC<ImbalanceIndicatorProps> = ({
-  snapshots,
-  theme
+  snapshots
 }) => {
   const imbalanceData = useMemo(() => {
     if (snapshots.length === 0) return { ratio: 0, bidVolume: 0, askVolume: 0, trend: 'neutral' };
@@ -62,7 +60,7 @@ const ImbalanceIndicator: React.FC<ImbalanceIndicatorProps> = ({
       {/* Background bar */}
       <mesh>
         <boxGeometry args={[barWidth, barHeight, 1]} />
-        <meshStandardMaterial color={theme === 'dark' ? '#1a1a1a' : '#e5e5e5'} />
+        <meshStandardMaterial color="#1a1a1a" />
       </mesh>
       
       {/* Bid side */}
@@ -88,7 +86,7 @@ const ImbalanceIndicator: React.FC<ImbalanceIndicatorProps> = ({
       {/* Center line */}
       <mesh position={[0, 0, 0.1]}>
         <boxGeometry args={[0.2, barHeight + 1, 1.2]} />
-        <meshStandardMaterial color={theme === 'dark' ? '#ffffff' : '#000000'} />
+        <meshStandardMaterial color="#ffffff" />
       </mesh>
       
       {/* Imbalance indicator */}
@@ -105,7 +103,7 @@ const ImbalanceIndicator: React.FC<ImbalanceIndicatorProps> = ({
       <Text
         position={[0, barHeight + 3, 0]}
         fontSize={1}
-        color={theme === 'dark' ? '#ffffff' : '#000000'}
+        color="#ffffff"
         anchorX="center"
       >
         Order Imbalance
@@ -133,7 +131,7 @@ const ImbalanceIndicator: React.FC<ImbalanceIndicatorProps> = ({
       <Text
         position={[0, -barHeight - 2, 0]}
         fontSize={0.8}
-        color={theme === 'dark' ? '#ffffff' : '#000000'}
+        color="#ffffff"
         anchorX="center"
       >
         {(imbalanceData.ratio * 100).toFixed(1)}%
